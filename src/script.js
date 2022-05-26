@@ -1,28 +1,33 @@
 import './style.css'
-
 import * as THREE from 'three'
 
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import Guify from 'guify'
 import { CinematicCamera } from 'three/examples/jsm/cameras/CinematicCamera.js'
+
 
 /**
  * Base
  */
-
-// Options
-const mouse = new THREE.Vector2()
-let INTERSECTED
-const radius = 100
-let theta = 0
 
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
 
 // Scene
 const scene = new THREE.Scene()
-scene.background = new THREE.Color( 0xf0f0f0 )
-scene.ambient = new THREE.AmbientLight('#ffffff', 0.3)
+scene.ambient = new THREE.AmbientLight(0xffffff, 0.1)
 scene.add(scene.ambient)
+
+// Debug
+const gui = new Guify({
+    align: 'right',
+    width: '300px',
+    theme: 'dark',
+    barMode: 'none'
+})
+
+const guiDummy = {}
+guiDummy.clearColor = '#f0f0f0'
 
 /**
  * Sizes
@@ -51,29 +56,45 @@ window.addEventListener('resize', () =>
  * Camera
  */
 // Base camera
-const camera = new CinematicCamera(60, sizes.width / sizes.height, 0.1, 1000)
+const camera = new CinematicCamera(60, sizes.width / sizes.height, 1, 1000)
 camera.position.set(2, 1, 500)
 camera.setLens(5)
 scene.add(camera)
 
 // Controls
 const controls = new OrbitControls(camera, canvas)
+controls.enabled = false
 controls.enableDamping = true
 
-// Light
-const directionalLights = new THREE.DirectionalLight('#ffffff', 0.35)
-directionalLights.position.set(1, 1, 1).normalize()
-scene.add(directionalLights)
+gui
+.Register({
+    type: 'folder',
+    label: 'camera',
+    open: false
+})
+
+gui
+.Register({
+    folder: 'camera',
+    object: controls,
+    property: 'enabled',
+    type: 'checkbox',
+    label: 'controls.enabled'
+})
 
 /**
  * Spheres
  */
 const spheres = {}
-
 spheres.count = 1500
 
+// Lights
+spheres.directionalLights = new THREE.DirectionalLight()
+spheres.directionalLights.position.set(1, 1, 1).normalize()
+scene.add(spheres.directionalLights)
+
 // Geometry
-spheres.geometry = new THREE.SphereGeometry(12.5, 64, 32)
+spheres.geometry = new THREE.SphereGeometry(15, 64, 32)
 
 // Object Loop
 for(let i = 0; i < spheres.count; i++)
@@ -90,6 +111,12 @@ for(let i = 0; i < spheres.count; i++)
 // Raycaster
 const raycaster = new THREE.Raycaster()
 
+// Options
+const mouse = new THREE.Vector2()
+let INTERSECTED
+const radius = 100
+let theta = 0
+
 /**
  * Renderer
  */
@@ -98,6 +125,7 @@ const renderer = new THREE.WebGLRenderer({
     antialias: true
 })
 
+renderer.setClearColor(guiDummy.clearColor, 1)
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
