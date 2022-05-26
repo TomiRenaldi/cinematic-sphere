@@ -1,15 +1,28 @@
 import './style.css'
+
 import * as THREE from 'three'
+
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { CinematicCamera } from 'three/examples/jsm/cameras/CinematicCamera.js'
 
 /**
  * Base
  */
+
+// Options
+const mouse = new THREE.Vector2()
+let INTERSECTED
+const radius = 100
+let theta = 0
+
 // Canvas
 const canvas = document.querySelector('canvas.webgl')
 
 // Scene
 const scene = new THREE.Scene()
+scene.background = new THREE.Color( 0xf0f0f0 )
+scene.ambient = new THREE.AmbientLight('#ffffff', 0.3)
+scene.add(scene.ambient)
 
 /**
  * Sizes
@@ -38,34 +51,84 @@ window.addEventListener('resize', () =>
  * Camera
  */
 // Base camera
-const camera = new THREE.PerspectiveCamera(75, sizes.width / sizes.height, 0.1, 100)
-camera.position.x = 1
-camera.position.y = 1
-camera.position.z = 1
+const camera = new CinematicCamera(60, sizes.width / sizes.height, 0.1, 1000)
+camera.position.set(2, 1, 500)
+camera.setLens(5)
 scene.add(camera)
 
 // Controls
 const controls = new OrbitControls(camera, canvas)
 controls.enableDamping = true
 
+// Light
+const directionalLights = new THREE.DirectionalLight('#ffffff', 0.35)
+directionalLights.position.set(1, 1, 1).normalize()
+scene.add(directionalLights)
+
 /**
- * Cube
+ * Spheres
  */
-const cube = new THREE.Mesh(
-    new THREE.BoxGeometry(1, 1, 1),
-    new THREE.MeshBasicMaterial({ color: 0xff0000 })
-)
-scene.add(cube)
+const spheres = {}
+
+spheres.count = 1500
+
+// Geometry
+spheres.geometry = new THREE.SphereGeometry(12.5, 64, 32)
+
+// Object Loop
+for(let i = 0; i < spheres.count; i++)
+{
+    const object = new THREE.Mesh(spheres.geometry, new THREE.MeshLambertMaterial({ color: Math.random() * 0xffffff }))
+
+    object.position.x = Math.random() * 800 - 400
+    object.position.y = Math.random() * 800 - 400
+    object.position.z = Math.random() * 800 - 400
+
+    scene.add(object)
+}
+
+// Raycaster
+const raycaster = new THREE.Raycaster()
 
 /**
  * Renderer
  */
 const renderer = new THREE.WebGLRenderer({
     canvas: canvas,
-    antialias: true,
+    antialias: true
 })
+
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+window.addEventListener('mousemove', (_event) => {
+    _event.preventDefault()
+
+    mouse.x = (_event.clientX / sizes.width) * 2 - 1
+    mouse.y = - (_event.clientY / sizes.height) * 2 + 1
+})
+
+const effectController = {
+    focalLength: 15,
+    fstop: 2.8,
+    showFocus: false,
+    focalDepth: 3
+}
+
+const matChanger = () => {
+    for(const e in effectController) {
+        if(e in camera.postprocessing.bokeh_uniforms) {
+            camera.postprocessing.bokeh_uniforms[e].value = effectController[e]
+        }
+    }
+
+    camera.postprocessing.bokeh_uniforms['znear'].value = camera.near
+    camera.postprocessing.bokeh_uniforms['zfar'].value = camera.far
+    camera.setLens(effectController.focalLength, camera.frameHeight, effectController.fstop, camera.coc)
+    effectController['focalDepth'] = camera.postprocessing.bokeh_uniforms['focalDepth'].value
+}
+
+matChanger()
 
 /**
  * Animate
@@ -79,12 +142,54 @@ const tick = () =>
     const deltaTime = elapsedTime - lastElapsedTime
     lastElapsedTime = elapsedTime
 
+    theta += 0.1
+
+    camera.position.x = radius * Math.sin(THREE.MathUtils.degToRad(theta))
+    camera.position.x = radius * Math.sin(THREE.MathUtils.degToRad(theta))
+    camera.position.z = radius * Math.cos(THREE.MathUtils.degToRad(theta))
+
+    camera.updateMatrixWorld()
+
     // Update controls
     controls.update()
+    
+    // Render & Find Intersection
+    raycaster.setFromCamera(mouse, camera)
+    const intersects = raycaster.intersectObjects(scene.children, false)
+
+    if(intersects.length > 0)
+    {
+        const targetDistance = intersects[0].distance
+
+        // Method Cinematic Camera (fokusAt)
+        camera.focusAt(targetDistance) 
+
+        if(INTERSECTED != intersects[0].object) {
+            if(INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex)
+
+            INTERSECTED = intersects[0].object
+            INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex()
+            INTERSECTED.material.emissive.setHex(0xff0000)
+        }
+    }
+    else
+    {
+        if(INTERSECTED) INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex)
+        INTERSECTED = null
+    }
 
     // Render
-    renderer.render(scene, camera)
+    if(camera.postprocessing.enabled) {
+        camera.renderCinematic(scene, renderer)
+    }
+    else
+    {
+        scene.overrideMaterial = null
 
+        renderer.clear()
+        renderer.render(scene, camera)
+    }
+    
     // Call tick again on the next frame
     window.requestAnimationFrame(tick)
 }
