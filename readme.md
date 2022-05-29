@@ -1,5 +1,16 @@
 # Cinematic Sphere
 
+# TODO
+
+- [] Sphere make more
+- [] Camera
+    - [] Raycasting
+    - [] Bokeh
+- [] Mouse
+    - [] mark sphere
+- [] Debug
+    - [] lil-gui
+
 # Setup
 Download [Node.js](https://nodejs.org/en/download/).
 Run this followed commands:
