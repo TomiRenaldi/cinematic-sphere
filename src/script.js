@@ -1,10 +1,10 @@
 import './style.css'
 import * as THREE from 'three'
 
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import Guify from 'guify'
-import { CinematicCamera } from 'three/examples/jsm/cameras/CinematicCamera.js'
+import GUI from 'lil-gui'
 
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { CinematicCamera } from 'three/examples/jsm/cameras/CinematicCamera.js'
 
 /**
  * Base
@@ -19,15 +19,7 @@ scene.ambient = new THREE.AmbientLight(0xffffff, 0.1)
 scene.add(scene.ambient)
 
 // Debug
-const gui = new Guify({
-    align: 'right',
-    width: '300px',
-    theme: 'dark',
-    barMode: 'none'
-})
-
-const guiDummy = {}
-guiDummy.clearColor = '#f0f0f0'
+const gui = new GUI()
 
 /**
  * Sizes
@@ -63,29 +55,13 @@ scene.add(camera)
 
 // Controls
 const controls = new OrbitControls(camera, canvas)
-controls.enabled = false
 controls.enableDamping = true
-
-gui
-.Register({
-    type: 'folder',
-    label: 'camera',
-    open: false
-})
-
-gui
-.Register({
-    folder: 'camera',
-    object: controls,
-    property: 'enabled',
-    type: 'checkbox',
-    label: 'controls.enabled'
-})
 
 /**
  * Spheres
  */
 const spheres = {}
+
 spheres.count = 1500
 
 // Lights
@@ -99,7 +75,7 @@ spheres.geometry = new THREE.SphereGeometry(15, 64, 32)
 // Object Loop
 for(let i = 0; i < spheres.count; i++)
 {
-    const object = new THREE.Mesh(spheres.geometry, new THREE.MeshLambertMaterial({ color: Math.random() * 0xffffff }))
+    const object = new THREE.Mesh(spheres.geometry, new THREE.MeshLambertMaterial({ color: '#5e5e5e' }))
 
     object.position.x = Math.random() * 800 - 400
     object.position.y = Math.random() * 800 - 400
@@ -125,7 +101,7 @@ const renderer = new THREE.WebGLRenderer({
     antialias: true
 })
 
-renderer.setClearColor(guiDummy.clearColor, 1)
+renderer.setClearColor('#0f0f0f', 1)
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
@@ -139,8 +115,8 @@ window.addEventListener('mousemove', (_event) => {
 const effectController = {
     focalLength: 15,
     fstop: 2.8,
-    showFocus: false,
-    focalDepth: 3
+    focalDepth: 3,
+    showFocus: false
 }
 
 const matChanger = () => {
@@ -155,6 +131,40 @@ const matChanger = () => {
     camera.setLens(effectController.focalLength, camera.frameHeight, effectController.fstop, camera.coc)
     effectController['focalDepth'] = camera.postprocessing.bokeh_uniforms['focalDepth'].value
 }
+
+gui
+.add(
+    effectController, 
+    'focalLength', 
+    1, 
+    135, 
+    0.01 
+).onChange(matChanger)
+
+gui
+.add(
+    effectController, 
+    'fstop', 
+    1.8, 
+    22, 
+    0.01 
+).onChange(matChanger)
+
+gui
+.add(
+    effectController, 
+    'focalDepth', 
+    0.1, 
+    100, 
+    0.001 
+).onChange(matChanger)
+
+gui
+.add(
+    effectController, 
+    'showFocus', 
+    true 
+).onChange(matChanger)
 
 matChanger()
 
