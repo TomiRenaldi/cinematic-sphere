@@ -2,14 +2,14 @@
 
 # TODO
 
-- [] Sphere make more
-- [] Camera
-    - [] Raycasting
-    - [] Bokeh
-- [] Mouse
-    - [] mark sphere
-- [] Debug
-    - [] lil-gui
+- [x] Sphere make more
+- [x] Camera
+    - [x] Raycasting
+    - [x] Bokeh
+- [x] Mouse
+    - [x] mark sphere
+- [x] Debug
+    - [x] lil-gui
 
 # Setup
 Download [Node.js](https://nodejs.org/en/download/).
