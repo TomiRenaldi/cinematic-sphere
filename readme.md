@@ -1,6 +1,6 @@
 # Cinematic Sphere
 
-# TODO
+# Todo
 
 - [x] Sphere make more
 - [x] Camera
