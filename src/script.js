@@ -1,6 +1,5 @@
 import './style.css'
 import * as THREE from 'three'
-
 import GUI from 'lil-gui'
 
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
@@ -70,7 +69,7 @@ spheres.directionalLights.position.set(1, 1, 1).normalize()
 scene.add(spheres.directionalLights)
 
 // Geometry
-spheres.geometry = new THREE.SphereGeometry(15, 64, 32)
+spheres.geometry = new THREE.SphereGeometry(15, 32, 32)
 
 // Object Loop
 for(let i = 0; i < spheres.count; i++)
